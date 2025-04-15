@@ -1,6 +1,4 @@
 import argparse
-import numpy as np
-import matplotlib.pyplot as plt
 import utils
 from imitator import *
 

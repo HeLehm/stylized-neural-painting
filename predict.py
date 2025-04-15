@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import torch
 import torch.optim as optim
 from painter import *
+from device_util import auto_device
 
 
 class Predictor(cog.Predictor):
@@ -74,7 +75,7 @@ class Predictor(cog.Predictor):
 
 
 def optimize_painter(pt, args, output_type):
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    device = auto_device()
     pt._load_checkpoint()
     pt.net_G.eval()
 

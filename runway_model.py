@@ -6,9 +6,10 @@ torch.cuda.current_device()
 import torch.optim as optim
 import runway
 from painter import *
+from device_util import auto_device
 
 # Decide which device we want to run on
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+device = auto_device()
 from PIL import Image
 
 # settings

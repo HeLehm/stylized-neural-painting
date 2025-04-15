@@ -3,7 +3,6 @@ import cv2
 import random
 import utils
 
-import matplotlib.pyplot as plt
 
 
 def _random_floats(low, high, size):

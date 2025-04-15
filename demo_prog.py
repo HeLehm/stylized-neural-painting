@@ -3,6 +3,7 @@ import torch
 import torch.optim as optim
 
 from painter import *
+from device_util import auto_device
 
 # settings
 parser = argparse.ArgumentParser(description="STYLIZED NEURAL PAINTING")
@@ -107,7 +108,7 @@ args = parser.parse_args()
 
 
 # Decide which device we want to run on
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+device = auto_device()
 
 
 def optimize_x(pt):

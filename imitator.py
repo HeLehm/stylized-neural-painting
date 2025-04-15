@@ -1,22 +1,21 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import cv2
 import os
 
 import utils
 import loss
 from networks import *
+from device_util import auto_device
 
 import torch
 import torch.optim as optim
 from torch.optim import lr_scheduler
-import torch.nn as nn
 
 import renderer
 
 
 # Decide which device we want to run on
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+device = auto_device()
 
 
 class Imitator:

@@ -7,10 +7,10 @@ Discrete OT : Sinkhorn algorithm for point cloud marginals.
 """
 
 import torch
-from torch.autograd import Variable
+from device_util import auto_device
 
 # Decide which device we want to run on
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+device = auto_device()
 
 
 def sinkhorn_normalized(x, y, epsilon, niter, mass_x=None, mass_y=None):

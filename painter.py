@@ -12,7 +12,7 @@ import renderer
 import torch
 
 # Decide which device we want to run on
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+device = auto_device()
 
 
 class PainterBase:
