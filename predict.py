@@ -92,7 +92,6 @@ def optimize_painter(pt, args, output_type):
         pt.stroke_sampler(pt.anchor_id)
         iters_per_stroke = int(500 / pt.m_strokes_per_block)
         for i in range(iters_per_stroke):
-
             pt.optimizer_x.zero_grad()
 
             pt.x_ctt.data = torch.clamp(pt.x_ctt.data, 0.1, 1 - 0.1)
@@ -101,11 +100,11 @@ def optimize_painter(pt, args, output_type):
 
             if args.canvas_color == "white":
                 pt.G_pred_canvas = torch.ones(
-                    [args.m_grid ** 2, 3, pt.net_G.out_size, pt.net_G.out_size]
+                    [args.m_grid**2, 3, pt.net_G.out_size, pt.net_G.out_size]
                 ).to(device)
             else:
                 pt.G_pred_canvas = torch.zeros(
-                    [args.m_grid ** 2, 3, pt.net_G.out_size, pt.net_G.out_size]
+                    [args.m_grid**2, 3, pt.net_G.out_size, pt.net_G.out_size]
                 ).to(device)
 
             pt._forward_pass()

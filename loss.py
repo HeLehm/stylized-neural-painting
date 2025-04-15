@@ -12,7 +12,6 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 class PixelLoss(nn.Module):
-
     def __init__(self, p=1):
         super(PixelLoss, self).__init__()
         self.p = p
@@ -21,7 +20,7 @@ class PixelLoss(nn.Module):
         if ignore_color:
             canvas = torch.mean(canvas, dim=1)
             gt = torch.mean(gt, dim=1)
-        loss = torch.mean(torch.abs(canvas-gt)**self.p)
+        loss = torch.mean(torch.abs(canvas - gt) ** self.p)
         return loss
 
 
@@ -39,8 +38,8 @@ class VGGPerceptualLoss(torch.nn.Module):
                 p.requires_grad = False
         self.blocks = torch.nn.ModuleList(blocks)
         self.transform = torch.nn.functional.interpolate
-        self.mean = torch.tensor([0.485, 0.456, 0.406]).view(1,3,1,1)
-        self.std = torch.tensor([0.229, 0.224, 0.225]).view(1,3,1,1)
+        self.mean = torch.tensor([0.485, 0.456, 0.406]).view(1, 3, 1, 1)
+        self.std = torch.tensor([0.229, 0.224, 0.225]).view(1, 3, 1, 1)
         self.resize = resize
 
     def forward(self, input, target, ignore_color=False):
@@ -52,11 +51,15 @@ class VGGPerceptualLoss(torch.nn.Module):
         if input.shape[1] != 3:
             input = input.repeat(1, 3, 1, 1)
             target = target.repeat(1, 3, 1, 1)
-        input = (input-self.mean) / self.std
-        target = (target-self.mean) / self.std
+        input = (input - self.mean) / self.std
+        target = (target - self.mean) / self.std
         if self.resize:
-            input = self.transform(input, mode='bilinear', size=(224, 224), align_corners=False)
-            target = self.transform(target, mode='bilinear', size=(224, 224), align_corners=False)
+            input = self.transform(
+                input, mode="bilinear", size=(224, 224), align_corners=False
+            )
+            target = self.transform(
+                target, mode="bilinear", size=(224, 224), align_corners=False
+            )
         loss = 0.0
         x = input
         y = target
@@ -65,7 +68,6 @@ class VGGPerceptualLoss(torch.nn.Module):
             y = block(y)
             loss += torch.nn.functional.l1_loss(x, y)
         return loss
-
 
 
 class VGGStyleLoss(torch.nn.Module):
@@ -80,7 +82,7 @@ class VGGStyleLoss(torch.nn.Module):
         if transfer_mode == 0:  # transfer color only
             blocks.append(vgg.features[:4].eval())
             blocks.append(vgg.features[4:9].eval())
-        else: # transfer both color and texture
+        else:  # transfer both color and texture
             blocks.append(vgg.features[:4].eval())
             blocks.append(vgg.features[4:9].eval())
             blocks.append(vgg.features[9:16].eval())
@@ -110,8 +112,12 @@ class VGGStyleLoss(torch.nn.Module):
         input = (input - self.mean) / self.std
         target = (target - self.mean) / self.std
         if self.resize:
-            input = self.transform(input, mode='bilinear', size=(224, 224), align_corners=False)
-            target = self.transform(target, mode='bilinear', size=(224, 224), align_corners=False)
+            input = self.transform(
+                input, mode="bilinear", size=(224, 224), align_corners=False
+            )
+            target = self.transform(
+                target, mode="bilinear", size=(224, 224), align_corners=False
+            )
         loss = 0.0
         x = input
         y = target
@@ -120,13 +126,11 @@ class VGGStyleLoss(torch.nn.Module):
             y = block(y)
             gm_x = self.gram_matrix(x)
             gm_y = self.gram_matrix(y)
-            loss += torch.sum((gm_x-gm_y)**2)
+            loss += torch.sum((gm_x - gm_y) ** 2)
         return loss
 
 
-
 class SinkhornLoss(nn.Module):
-
     def __init__(self, epsilon=0.01, niter=5, normalize=False):
         super(SinkhornLoss, self).__init__()
         self.epsilon = epsilon
@@ -134,20 +138,20 @@ class SinkhornLoss(nn.Module):
         self.normalize = normalize
 
     def _mesh_grids(self, batch_size, h, w):
-
         a = torch.linspace(0.0, h - 1.0, h).to(device)
         b = torch.linspace(0.0, w - 1.0, w).to(device)
         y_grid = a.view(-1, 1).repeat(batch_size, 1, w) / h
         x_grid = b.view(1, -1).repeat(batch_size, h, 1) / w
-        grids = torch.cat([y_grid.view(batch_size, -1, 1), x_grid.view(batch_size, -1, 1)], dim=-1)
+        grids = torch.cat(
+            [y_grid.view(batch_size, -1, 1), x_grid.view(batch_size, -1, 1)], dim=-1
+        )
         return grids
 
     def forward(self, canvas, gt):
-
         batch_size, c, h, w = gt.shape
         if h > 24:
-            canvas = nn.functional.interpolate(canvas, [24, 24], mode='area')
-            gt = nn.functional.interpolate(gt, [24, 24], mode='area')
+            canvas = nn.functional.interpolate(canvas, [24, 24], mode="area")
+            gt = nn.functional.interpolate(gt, [24, 24], mode="area")
             batch_size, c, h, w = gt.shape
 
         canvas_grids = self._mesh_grids(batch_size, h, w)
@@ -163,16 +167,21 @@ class SinkhornLoss(nn.Module):
         mass_y = img_2.reshape(batch_size, -1)
         if self.normalize:
             loss = spc.sinkhorn_normalized(
-                canvas_grids, gt_grids, epsilon=self.epsilon, niter=self.niter,
-                mass_x=mass_x, mass_y=mass_y)
+                canvas_grids,
+                gt_grids,
+                epsilon=self.epsilon,
+                niter=self.niter,
+                mass_x=mass_x,
+                mass_y=mass_y,
+            )
         else:
             loss = spc.sinkhorn_loss(
-                canvas_grids, gt_grids, epsilon=self.epsilon, niter=self.niter,
-                mass_x=mass_x, mass_y=mass_y)
-
+                canvas_grids,
+                gt_grids,
+                epsilon=self.epsilon,
+                niter=self.niter,
+                mass_x=mass_x,
+                mass_y=mass_y,
+            )
 
         return loss
-
-
-
-
